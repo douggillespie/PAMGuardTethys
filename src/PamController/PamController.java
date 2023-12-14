@@ -54,11 +54,13 @@ import fftManager.FFTDataUnit;
 import generalDatabase.DBControlUnit;
 import javafx.application.Platform;
 import javafx.stage.Stage;
+import metadata.MetaDataContol;
 import Array.ArrayManager;
-import PamController.command.MultiportController;
+import PamController.command.MulticastController;
 import PamController.command.NetworkController;
 import PamController.command.TerminalController;
 import PamController.command.WatchdogComms;
+import PamController.fileprocessing.ReprocessManager;
 import PamController.masterReference.MasterReferencePoint;
 import PamController.settings.output.xml.PamguardXMLWriter;
 import PamController.settings.output.xml.XMLWriterDialog;
@@ -119,6 +121,7 @@ public class PamController implements PamControllerInterface, PamSettings {
 	public static final int PAM_STALLED = 3;
 	public static final int PAM_INITIALISING = 4;
 	public static final int PAM_STOPPING = 5;
+	public static final int PAM_COMPLETE = 6;
 
 	// status' for RunMode = RUN_PAMVIEW
 	public static final int PAM_LOADINGDATA = 2;
@@ -256,8 +259,8 @@ public class PamController implements PamControllerInterface, PamSettings {
 		if (pamBuoyGlobals.getNetworkControlPort() != null) {
 			networkController = new NetworkController(this);
 		}
-		if (pamBuoyGlobals.getMultiportAddress() != null) {
-			new MultiportController(this);
+		if (pamBuoyGlobals.getMulticastAddress() != null) {
+			new MulticastController(this);
 		}
 
 		guiFrameManager = PamGUIManager.createGUI(this, object);
@@ -448,6 +451,7 @@ public class PamController implements PamControllerInterface, PamSettings {
 		System.out.println("");
 		System.out.println("Note - ignore the following SLF4J warn/error messages, they are not applicable to this application");
 		ArrayManager.getArrayManager(); // create the array manager so that it get's it's settings
+		MetaDataContol.getMetaDataControl();
 
 		/**
 		 * Check for archived files and unpack automatically. 
@@ -705,7 +709,7 @@ public class PamController implements PamControllerInterface, PamSettings {
 		Platform.exit();
 		
 		// terminate the JVM
-		System.exit(0);
+		System.exit(getPamStatus());
 	}
 
 	/**
@@ -1021,6 +1025,24 @@ public class PamController implements PamControllerInterface, PamSettings {
 		}
 		return foundUnits;
 	}
+	
+	/**
+	 * Get an Array list of PamControlledUnits of a particular class (exact matches only). 
+	 * @param unitClass PamControlledUnit class
+	 * @return List of current instances of this class. 
+	 */
+	public ArrayList<PamControlledUnit> findControlledUnits(Class unitClass, boolean includeSubClasses) {
+		if (includeSubClasses == false) {
+			return findControlledUnits(unitClass);
+		}
+		ArrayList<PamControlledUnit> foundUnits = new ArrayList<>();
+		for (int i = 0; i < getNumControlledUnits(); i++) {
+			if (unitClass.isAssignableFrom(pamControlledUnits.get(i).getClass())) {
+				foundUnits.add(pamControlledUnits.get(i));
+			}
+		}
+		return foundUnits;
+	}
 
 	/**
 	 * Check whether a controlled unit exists based on it's name. 
@@ -1191,6 +1213,23 @@ public class PamController implements PamControllerInterface, PamSettings {
 			return false;
 		}
 
+		/*
+		 * 
+		 * This needs to be called after prepareproces. 
+		 * Now we do some extra checks on the stores to see if we want to overwite data, 
+		 * carry on from where we left off, etc. 
+		 */
+		if (saveSettings && getRunMode() == RUN_NORMAL) { // only true on a button press or network start. 
+			ReprocessManager reprocessManager = new ReprocessManager();
+			boolean goonthen = reprocessManager.checkOutputDataStatus();
+			if (goonthen == false) {
+				System.out.println("Data processing will not start since you've chosen not to overwrite existing output data");
+				pamStop();
+				setPamStatus(PAM_IDLE);
+				return false;
+			}
+		}
+
 		if (saveSettings) {
 			startTime = PamCalendar.getSessionStartTime();
 //			System.out.printf("Saving settings for start time %s\n", PamCalendar.formatDBDateTime(startTime));
@@ -1279,7 +1318,12 @@ public class PamController implements PamControllerInterface, PamSettings {
 
 		@Override
 		public void run() {
+			long t1 = System.currentTimeMillis();
 			while (checkRunStatus()) {
+				long t2 = System.currentTimeMillis();
+				if (t2 - t1 > 5000) {
+					System.out.printf("Stopping, but stuck in loop for CheckRunStatus for %3.1fs\n", (double) (t2-t1)/1000.);
+				}
 				try {
 					Thread.sleep(10);
 				} catch (InterruptedException e) {
@@ -2556,7 +2600,7 @@ public class PamController implements PamControllerInterface, PamSettings {
 			if (dbc == null) {
 				return null;
 			}
-			return dbc.getDatabaseName();
+			return dbc.getLongDatabaseName();
 		}
 		return null;
 	}

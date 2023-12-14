@@ -46,8 +46,6 @@ import fftManager.PamFFTControl;
 import group3dlocaliser.Group3DLocaliserControl;
 import metadata.MetaDataContol;
 import meygenturbine.MeygenTurbine;
-import networkTransfer.receive.BuoyStatusDataUnit;
-import networkTransfer.receive.NetworkReceiver;
 import printscreen.PrintScreenControl;
 import rockBlock.RockBlockControl;
 import tethys.TethysControl;
@@ -463,20 +461,18 @@ final public class PamModel implements PamModelInterface, PamSettings {
 		mi.setMaxNumber(1);
 
 
-		mi = PamModuleInfo.registerControlledUnit(MetaDataContol.class.getName(), MetaDataContol.unitType);
-		mi.setToolTipText("Deployment Meta Data");
-		mi.setModulesMenuGroup(utilitiesGroup);
-		mi.setMaxNumber(1); 
+//		mi = PamModuleInfo.registerControlledUnit(MetaDataContol.class.getName(), MetaDataContol.unitType);
+//		mi.setToolTipText("Project Meta Data");
+//		mi.setModulesMenuGroup(utilitiesGroup);
+//		mi.setMaxNumber(1); 
 		
 		if (isViewer) {
 			mi = PamModuleInfo.registerControlledUnit(TethysControl.class.getName(), TethysControl.defaultName);
 			mi.setToolTipText("Interface to Tethys Database");
 			mi.setModulesMenuGroup(utilitiesGroup);
 			mi.setMaxNumber(1);
-		}
+		}		
 		
-		
-
 		/*
 		 * ************* End Utilities  Group *******************
 		 */
@@ -1100,6 +1096,7 @@ final public class PamModel implements PamModelInterface, PamSettings {
 		 * PamModel !
 		 */
 		
+//		pluginList.add(new MorlaisWP1aPlugin());
 
 		// Load up whatever default classloader was used to create this class.  Must use the same classloader
 		// for all plugins, or else we will not be able to create proper dependencies between them or be able
@@ -1273,6 +1270,7 @@ final public class PamModel implements PamModelInterface, PamSettings {
 								String help = null;
 								int ans = WarnOnce.showWarning(PamController.getMainFrame(), title, msg, WarnOnce.WARNING_MESSAGE, help, e1);
 								System.err.println("Exception while loading " +	className);
+								System.err.println(e1.getMessage());								
 								continue;
 							}
 						}						

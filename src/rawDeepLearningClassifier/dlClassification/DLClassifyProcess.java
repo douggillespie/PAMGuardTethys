@@ -107,7 +107,8 @@ public class DLClassifyProcess extends PamInstantProcess {
 		addOutputDataBlock(dlDetectionDataBlock);
 		dlDetectionDataBlock.setNaturalLifetimeMillis(600*1000); //keep this data for a while.
 		dlDetectionDataBlock.addDataAnnotationType(dlAnnotationType);
-
+		//ClipGeneration allows processing of detections by DIFAR module (and possibly others)
+		dlDetectionDataBlock.setCanClipGenerate(true); 
 		//add custom graphics
 		PamDetectionOverlayGraphics overlayGraphics = new DLGraphics(dlModelResultDataBlock);
 		overlayGraphics.setDetectionData(true);
@@ -375,7 +376,7 @@ public class DLClassifyProcess extends PamInstantProcess {
 					//Need to go by the parent data unit for merging data not the segments. Note that we may still add multiple
 					//predicitions to a single data unit depending on how many segments it contains. 
 
-				    System.out.println("New model data " + pamRawData.getParentDataUnit().getUID() + " " + groupDataBuffer[i].size() + " " + modelResultDataBuffer[i].size()); 
+				    //System.out.println("New model data " + pamRawData.getParentDataUnit().getUID() + " " + groupDataBuffer[i].size() + " " + modelResultDataBuffer[i].size()); 
 
 					if (pamRawData.getParentDataUnit()!=lastParentDataUnit[i]) {
 						//save any data
@@ -483,7 +484,7 @@ public class DLClassifyProcess extends PamInstantProcess {
 
 		DataUnitBaseData basicData  = groupDataBuffer.get(0).getBasicData().clone(); 
 		basicData.setMillisecondDuration(1000.*rawdata[0].length/this.sampleRate);
-		basicData.setSampleDuration((long) (groupDataBuffer.size()*dlControl.getDLParams().sampleHop));
+		basicData.setSampleDuration((long) (groupDataBuffer.size()*dlControl.getDLParams().rawSampleSize));
 
 		//		System.out.println("Model result: " + modelResult.size()); 
 		DLDetection dlDetection = new DLDetection(basicData, rawdata); 

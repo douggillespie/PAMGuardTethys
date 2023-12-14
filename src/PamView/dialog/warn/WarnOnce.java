@@ -24,6 +24,7 @@ import javafx.scene.control.Alert.AlertType;
 public class WarnOnce implements PamSettings {
 
 	public static final int OK_CANCEL_OPTION = JOptionPane.OK_CANCEL_OPTION;
+	public static final int YES_NO_OPTION = JOptionPane.YES_NO_OPTION;
 	public static final int WARNING_MESSAGE = JOptionPane.DEFAULT_OPTION;
 	public static final int OK_OPTION = JOptionPane.OK_OPTION;
 	public static final int CANCEL_OPTION = JOptionPane.CANCEL_OPTION;
@@ -47,6 +48,7 @@ public class WarnOnce implements PamSettings {
 		int ans = showWarning(parent, "Warning Messages", "Show all PAMGuard warning messages", WarnOnce.OK_CANCEL_OPTION);
 		if (ans == WarnOnce.CANCEL_OPTION) return;
 		singleInstance.warnOnceList.clearList();
+		singleInstance.showThisSess.clear();
 	}
 	
 	@Override

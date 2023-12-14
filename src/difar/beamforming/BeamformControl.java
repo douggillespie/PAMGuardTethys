@@ -17,6 +17,7 @@ import PamController.PamControlledUnitSettings;
 import PamController.PamController;
 import PamController.PamSettingManager;
 import PamController.PamSettings;
+import PamController.fileprocessing.StoreStatus;
 import PamUtils.PamUtils;
 import PamguardMVC.PamDataBlock;
 import PamguardMVC.PamProcess;
@@ -85,6 +86,16 @@ public class BeamformControl extends PamControlledUnit implements PamSettings, O
 	@Override
 	public long getSettingsVersion() {
 		return DifarParameters.serialVersionUID;
+	}
+
+	@Override
+	public String getDataLocation() {
+		if (offlineFileServer != null) {
+			return offlineFileServer.getDataLocation();
+		}
+		else {
+			return null;
+		}
 	}
 
 	@Override
@@ -197,5 +208,6 @@ public class BeamformControl extends PamControlledUnit implements PamSettings, O
 		// TODO Auto-generated method stub
 		return beamformProcess;
 	}
+
 }
 	

@@ -42,6 +42,10 @@ public class RWEProcess extends PamProcess {
 	private FFTDataBlock sourceDataBlock;
 	private RWEDataBlock rweDataBlock;
 		
+	public RWEDataBlock getRweDataBlock() {
+		return rweDataBlock;
+	}
+
 	private Hashtable<Integer, BearingLocaliser> bearingLocalisers;
 	private StandardSymbolManager symbolManager;
 	/**
@@ -177,6 +181,7 @@ public class RWEProcess extends PamProcess {
 			minSoundType = rweControl.rweParameters.minSoundType;
 			classifier.setSoundData(getSampleRate(), sourceDataBlock.getFftLength(),
 					sourceDataBlock.getFftHop());
+//			System.out.println("Create right whale channel process " + iChannel);
 		}
 		
 		
@@ -211,7 +216,7 @@ public class RWEProcess extends PamProcess {
 //					System.out.println(String.format("Detected sound type %d on channel %d", 
 //							soundType, this.iChannel));
 					duration = sourceDataBlock.getFftHop() * aSound.duration;
-					rweDataUnit = new RWEDataUnit(aSound.timeMilliseconds, 
+					rweDataUnit = new RWEDataUnit(RWEProcess.this, aSound.timeMilliseconds, 
 							1<<iChannel, fftDataUnit.getStartSample()-duration, duration, aSound);
 					rweDataUnit.sortOutputMaps(sourceDataBlock.getChannelMap(), sourceDataBlock.getSequenceMapObject(), 1<<iChannel);
 					f[0] = aSound.minFreq * getSampleRate()/sourceDataBlock.getFftLength();

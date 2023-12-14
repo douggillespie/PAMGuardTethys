@@ -2,6 +2,7 @@ package PamController;
 
 import java.awt.Window;
 
+import PamController.fileprocessing.StoreStatus;
 import dataGram.DatagramManager;
 import dataMap.OfflineDataMapPoint;
 import pamScrollSystem.ViewLoadObserver;
@@ -33,6 +34,13 @@ public interface OfflineDataStore {
 	public String getDataSourceName();
 	
 	/**
+	 * Get the data location. This may be a specific file, or might be a folder
+	 * if data are in many files, a URI, etc. 
+	 * @return store locations
+	 */
+	public String getDataLocation();
+	
+	/**
 	 * Load data for a given datablock between two time limits. 
 	 * @param dataBlock datablock owner of the data
 	 * @param dataStart start time in milliseconds
@@ -52,7 +60,7 @@ public interface OfflineDataStore {
 
 	/**
 	 * Moved this function over from binary data store. 
-	 * Many storage systems may notbe able to do this, but some might !
+	 * Many storage systems may not be able to do this, but some might !
 	 * @param dataBlock
 	 * @param dmp
 	 * @return 
@@ -63,4 +71,5 @@ public interface OfflineDataStore {
 	 * @return the datagramManager
 	 */
 	public DatagramManager getDatagramManager();
+	
 }

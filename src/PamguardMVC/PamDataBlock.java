@@ -50,8 +50,10 @@ import org.w3c.dom.Element;
 import Acquisition.AcquisitionControl;
 import Acquisition.AcquisitionProcess;
 import pamScrollSystem.ViewLoadObserver;
+import tethys.TethysControl;
 import tethys.pamdata.AutoTethysProvider;
 import tethys.pamdata.TethysDataProvider;
+import tethys.species.DataBlockSpeciesManager;
 import dataGram.DatagramProvider;
 import dataMap.BespokeDataMapGraphic;
 import dataMap.OfflineDataMap;
@@ -74,8 +76,10 @@ import PamguardMVC.background.BackgroundDataBlock;
 import PamguardMVC.background.BackgroundManager;
 import PamguardMVC.dataOffline.OfflineDataLoadInfo;
 import PamguardMVC.dataOffline.OfflineDataLoading;
+import PamguardMVC.dataSelector.DataSelectParams;
 import PamguardMVC.dataSelector.DataSelector;
 import PamguardMVC.dataSelector.DataSelectorCreator;
+import PamguardMVC.dataSelector.DataSelectorSettings;
 import PamguardMVC.dataSelector.NullDataSelectorCreator;
 import PamguardMVC.datamenus.DataMenuParent;
 import PamguardMVC.nanotime.NanoTimeCalculator;
@@ -848,6 +852,30 @@ public class PamDataBlock<Tunit extends PamDataUnit> extends PamObservable {
 
 		return unitsInInterval;
 	}
+	
+	/**
+	 * Do data exist which cover the given time range ?  
+	 * @param startMillis
+	 * @param endMillis
+	 * @return true if data exist covering that time range. 
+	 */
+	public boolean hasDataRange(long startMillis, long endMillis) {
+		PamDataUnit first = null, last = null;
+		synchronized (synchronizationLock) {
+			first = getFirstUnit();
+			last = getLastUnit();
+		}
+		if (first == null || last == null) {
+			return false;
+		}
+		if (first.getTimeMilliseconds() > startMillis) {
+			return false;
+		}
+		if (last.getEndTimeInMilliseconds() < endMillis) {
+			return false;
+		}
+		return true;
+	}
 
 	// recursive search for the correct unit
 	// private Tunit searchFirstUnitAfter(int i1, int i2, long timems) {
@@ -1019,6 +1047,9 @@ public class PamDataBlock<Tunit extends PamDataUnit> extends PamObservable {
 	 * @return true if we need to reload offline data.
 	 */
 	public boolean needViewerDataLoad(OfflineDataLoadInfo offlineDataLoadInfo) {
+		if (pamDataUnits.size() == 0) {
+			return true;
+		}
 		if (offlineDataLoadInfo.getStartMillis() == currentViewDataStart
 				&& offlineDataLoadInfo.getEndMillis() == currentViewDataEnd) {
 			return false;
@@ -2083,6 +2114,9 @@ public class PamDataBlock<Tunit extends PamDataUnit> extends PamObservable {
 		/*
 		 * Doesnt notify it's own parent to avoid an infinite loop
 		 */
+		if (Float.isNaN(sampleRate)) {
+			System.out.println("NaN sample rate being set in " + getLongDataName());
+		}
 		if (notify) {
 			for (int i = 0; i < countObservers(); i++) {
 				if (getPamObserver(i).getObserverObject() != parentProcess) {
@@ -2808,7 +2842,7 @@ public class PamDataBlock<Tunit extends PamDataUnit> extends PamObservable {
 	 * @return temporary copy of the data
 	 */
 	public ArrayList<Tunit> getDataCopy(long t1, long t2, boolean assumeOrder, DataSelector dataSelector) {
-		if (dataSelector == null) {
+		if (dataSelector == null || dataSelector.getParams().getCombinationFlag() == DataSelectParams.DATA_SELECT_DISABLE) {
 			return getDataCopy(t1, t2, assumeOrder);
 		}
 		else {
@@ -2838,8 +2872,6 @@ public class PamDataBlock<Tunit extends PamDataUnit> extends PamObservable {
 	private Vector<OfflineDataMap> offlineDataMaps = null;
 
 	private SQLLogging logging;
-	
-	private TethysDataProvider tethysDataProvider;
 
 	private JSONObjectDataSource jsonDataSource;
 	
@@ -3055,22 +3087,30 @@ public class PamDataBlock<Tunit extends PamDataUnit> extends PamObservable {
 	
 	/**
 	 * Gets a data provider for Tethys. These will probably need
-	 * to be bespoke, but for now will autogenerate based on the SALLogging information. 
+	 * to be bespoke, but for now will autogenerate based on the SQLLogging information. 
 	 * @return the tethysDataProvider
 	 */
-	public TethysDataProvider getTethysDataProvider() {
-		if (tethysDataProvider == null && PamDetection.class.isAssignableFrom(unitClass) && getLogging() != null) {
-			tethysDataProvider = new AutoTethysProvider(this);
-		}
-		return tethysDataProvider;
+	public TethysDataProvider getTethysDataProvider(TethysControl tethysControl) {
+		return null;
 	}
 
 	/**
-	 * Set a data provider for Tethys.
-	 * @param tethysDataProvider the tethysDataProvider to set
+	 * Get the level of automation employed by the generation of these data. 
+	 * Should ideally be completed for everything providing data to Tethys. 
+	 * @return level of automation for this data block. 
 	 */
-	public void setTethysDataProvider(TethysDataProvider tethysDataProvider) {
-		this.tethysDataProvider = tethysDataProvider;
+	public DataAutomationInfo getDataAutomationInfo() {
+		return null;
+	}
+	
+	/**
+	 * Get information about species types that may occur within this data 
+	 * block.  Primarily for conversion into Tethys compatible data, but may 
+	 * prove to have other uses. 
+	 * @return Types of species information available within this datablock. 
+	 */
+	public DataBlockSpeciesManager<Tunit> getDatablockSpeciesManager() {
+		return null;
 	}
 
 	final public boolean getCanLog() {
